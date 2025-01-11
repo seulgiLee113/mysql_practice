@@ -18,8 +18,12 @@ select AVG(salary) from tbl_employee;
 모든 사원들의 아이디를 '@' 이후를 제외하여 조회하시오.
 (힌트: SUBSTR())
 */
--- select * from tbl_employee where SUBSTR(email, from -16);
+select emp_name, SUBSTR(email, 1, 6) from tbl_employee;
+select emp_name, email, instr(email, '@') from tbl_employee;
+select emp_name, SUBSTR(email, 1, instr(email, '@')-1) from tbl_employee;
 -----------------------------------------------------------------------
+-- https://blog.naver.com/tnsqo1126/221987578077
+
 
 /* Q4)
 tbl_employee 테이블에서 직원들의 주민번호를 조회하여 사원명, 생년, 생월, 생일을 각각 분리하여 조회할 것.
@@ -58,14 +62,13 @@ tbl_employee 테이블에서 근속 년수가 20년 이상인 직원을 조회�
 */
 -- timestampdiff(단위, 날짜1, 날짜2) : 날짜2-날짜1
 select emp_name, TIMESTAmpdiff(YEAR, hire_date, now()) as "근속 년수" from tbl_employee;
-select emp_name, TIMESTAmpdiff(YEAR, hire_date, now()) as "근속 년수" from tbl_employee having "근속 년수" >= 20;
-맞는데???아닌가....
-select * from tbl_employee 
-where  
-    -- select TIMESTAmpdiff(YEAR, hire_date, now()) 
-    -- as "근속 년수" 
-    -- from tbl_employee
-    -- >= 20;
+-- select emp_name, TIMESTAmpdiff(YEAR, hire_date, now()) as "근속 년수" from tbl_employee having "근속 년수" >= 20;
+-- 
+select emp_name, TIMESTAmpdiff(YEAR, hire_date, now()) as "근속 년수" from tbl_employee having `근속 년수` >= 20;
+-------------------------------------------
+-- https://byson.tistory.com/100
+---------------
+select emp_name, hire_date from tbl_employee where TIMESTAMPDIFF(year, hire_date, now()) >= 20;
 
 
 /* Q9)
@@ -77,7 +80,7 @@ tbl_employee 테이블에서 사원명, 입사일, 입사한 월의 근무 일�
 -- from tbl_employee;
 -- select DATEDIFF(last_day(hire_date), hire_date) as "입사한 월의 근무일 수"
 -- from tbl_employee;
-select emp_name, hire_date, DATEDIFF(last_day(hire_date), hire_date) as "입사한 월의 근무일 수"
+select emp_name, hire_date, DATEDIFF(last_day(hire_date), hire_date) +1 as "입사한 월의 근무일 수"
 from tbl_employee;
 
 
@@ -118,7 +121,8 @@ tbl_employee 테이블에서 이름, 입사일을 조회하시오.
 단, 입사일에 포맷을 적용하여 '2018년 6월 10일 (Tue)' 형식으로 출력할 것.
 (힌트: date_format(), to_date())
 */
-select emp_name, date_format(hire_date, '%Y.%m.%d') from tbl_employee;
+select emp_name, date_format(hire_date, '%Y년 %m월 %d일 (%a)') from tbl_employee;
+select emp_name, date_format(hire_date, '%Y년 %c월 %e일 (%a)') from tbl_employee;
 
 
 /* Q14)
@@ -127,7 +131,7 @@ tbl_employee 테이블에서 2000년도 이후에 입사한 사원의 사번, �
 */
 select emp_id, emp_name, year(hire_date) from tbl_employee;
 select year(hire_date) from tbl_employee;
-select emp_id, emp_name, date_format(hire_date, '%d') from tbl_employee where year(hire_date) > 2000;
+select emp_id, emp_name, hire_date from tbl_employee where year(hire_date) > 2000;
 
 /* Q15)
 EMPLOYEE 테이블에서 사번이 홀수인 직원들의 모든 정보를 조회하시오.
@@ -144,7 +148,8 @@ EMPLOYEE 테이블에서 보너스 포인트가 NULL인 직원은 0.5로, 보너
 */
 select emp_name, bonus from tbl_employee;
 update tbl_employee set bonus = 0.5 where bonus = null; 
-select * from tbl_employee;
+select emp_name, bonus, if((bonus is null), 0.5, 0.7) from tbl_employee;
+select if((bonus is null), 0.5, 0.7) from tbl_employee;
 
 
 
@@ -158,6 +163,15 @@ tbl_employee 테이블에서 직원명, 직급코드, 급여, 인상급여(위 �
 단, 인상된 급여는 '인상급여'라는 별칭을 붙여 조회할 것.
 (힌트: CASE문 사용 : https://www.w3schools.com/sql/func_mysql_case.asp)
 */
+select emp_name, job_code, salary,
+CASE 
+    WHEN job_code = 'J7' THEN salary + (salary * 0.1) 
+    when job_code = 'J6' THEN salary + (salary * 0.15)
+    WHEN job_code = 'J5' THEN salary + (salary * 0.2)
+    ELSE  salary + (salary * 0.05)
+END as "인상급여"
+from tbl_employee;
+
 
 
 /* Q18) HARD!!
@@ -167,4 +181,10 @@ tbl_employee 테이블에서 직원명, 직급코드, 급여, 인상급여(위 �
 그 이하는 '출력'으로 출력하여 처리하고 별명은 '구분'으로 한다.
 (힌트: CASE문 사용 : https://www.w3schools.com/sql/func_mysql_case.asp)
 */
-
+select emp_id, emp_name, salary,
+CASE 
+    WHEN salary > 5000000 THEN '고급'
+    WHEN 3000000 < salary and salary <= 5000000 THEN '중급' 
+    ELSE  '출력'
+END as '구분'
+from tbl_employee;
